@@ -14,12 +14,22 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
-        $tasks = Task::all();
+   {
+       
+        $data = [];
+        if (\Auth::check()) {
+            $user = \Auth::user();
+            $tasks = Task::all()->where('user_id',"=" ,$user->id);
 
-        return view('tasks.index', [
-            'tasks' => $tasks,
-        ]);
+            $data = [
+                'user' => $user,
+                'tasks' => $tasks,
+            ];
+           
+            return view('tasks.index', $data);
+        }else {
+            return view('welcome');
+        }
     }
 
     /**
@@ -52,6 +62,7 @@ class TasksController extends Controller
         $task = new Task;
         $task->status = $request->status; 
         $task->content = $request->content;
+        $task->user_id= \Auth::user()->id;
         $task->save();
 
         return redirect('/');
@@ -65,11 +76,28 @@ class TasksController extends Controller
      */
     public function show($id)
     {
-        $task = Task::find($id);
-
-        return view('tasks.show', [
-            'task' => $task,
-        ]);
+        if (\Auth::check())
+        {
+            $task =Task::find($id);
+            
+            if (\Auth::user()->id === $task->user_id)
+            {    
+                 return view('tasks.show', [
+                 'task' => $task,
+                ]);
+            
+             }
+        
+            else 
+             {
+                     return redirect('/');
+             }
+        }
+        else
+            {
+                return view ('welcome');
+            }
+        
     }
 
     /**
